@@ -2,7 +2,7 @@
     <application
         android:label="xogame"
         android:name="${applicationName}"
-        android:icon="@mipmap/launcher_icon">
+        android:icon="@mipmap/launcher_icon1">
         <activity
             android:name=".MainActivity"
             android:exported="true"

@@ -11,18 +11,24 @@ dependencies:
     sdk: flutter
   lottie: ^3.1.0
   flutter_colorpicker: ^1.0.3
+  build_runner: ^2.4.9
+  animated_text_kit: ^4.2.2
+  flutter_animated_button: ^2.0.3
+  google_fonts: ^6.2.1
 
+
+  
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^3.0.2
   flutter_launcher_icons: ^0.13.1
-  build_runner: ^2.3.3
+  
 
 flutter_launcher_icons:
-  android: "launcher_icon"
+  android: "launcher_icon1"
   ios: true
-  image_path: "assets/xo.jpeg"
+  image_path: "assets/app.png"
   min_sdk_android: 21 # android min sdk min:16, default 21
 
 
@@ -30,7 +36,7 @@ flutter:
   uses-material-design: true
   assets:
    - assets/Animation - 1712833907034.json
-  #  - images/a_dot_ham.jpeg
+   - assets/
   # fonts:
   #   - family: Schyler
   #     fonts:

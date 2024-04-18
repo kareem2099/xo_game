@@ -1,48 +1,83 @@
 import 'package:flutter/material.dart';
 
-class GamePage extends StatefulWidget {
+class GamePageHard extends StatefulWidget {
   final String player1Name;
   final String player2Name;
   final Color player1Color;
   final Color player2Color;
 
-  const GamePage(
-      {required this.player1Name,
+  const GamePageHard(
+      {super.key,
+      required this.player1Name,
       required this.player2Name,
       required this.player1Color,
       required this.player2Color});
 
   @override
-  _GamePageState createState() => _GamePageState();
+  State<GamePageHard> createState() => _GamePageHardState();
 }
 
-class _GamePageState extends State<GamePage> {
-  List<String> gameBoard = List.filled(9, ''); // Represents the game board
-  bool isPlayer1Turn = true; // Tracks whose turn it is
-  String currentPlayer = ''; // Tracks current player's symbol
-  int player1Wins = 0; // Tracks the number of wins for player 1
-  int player2Wins = 0; // Tracks the number of wins for player 2
+class _GamePageHardState extends State<GamePageHard>
+    with SingleTickerProviderStateMixin {
+  List<List<String>> gameBoard =
+      List.generate(5, (_) => List.filled(5, '')); // For a 5x5 board
+  List<int> moveQueue = []; // Queue to track the moves
+  bool isPlayer1Turn = true;
+  String currentPlayer = '';
+  int player1Wins = 0;
+  int player2Wins = 0;
+  late AnimationController _animationController;
+  late Animation<double> _opacityAnimation;
+  int _removeIndex = -1;
 
   @override
   void initState() {
     super.initState();
     currentPlayer = widget.player1Name; // Player 1 starts the game
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 700), // Duration of the animation
+      vsync: this,
+    );
+    // Define the opacity animation
+    _opacityAnimation =
+        Tween<double>(begin: 1.0, end: 0.0).animate(_animationController);
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
   }
 
   void resetGame() {
     setState(() {
-      gameBoard = List.filled(9, '');
+      gameBoard =
+          List.generate(5, (_) => List.filled(5, '')); // Reset for a new game
+      moveQueue.clear(); //clear the move queue
       isPlayer1Turn = true;
       currentPlayer = widget.player1Name;
     });
   }
 
-  void makeMove(int index) {
+  void makeMove(int row, int col) {
+    int flatIndex =
+        row * 4 + col; // Convert 2D index to flat index for the queue
     setState(() {
-      if (gameBoard[index] == '' && !checkForWinner()) {
-        gameBoard[index] = isPlayer1Turn ? 'X' : 'O';
+      if (gameBoard[row][col] == '' && !checkForWinner()) {
+        gameBoard[row][col] = isPlayer1Turn ? 'X' : 'O';
+        moveQueue.add(flatIndex); // Add move to the queue
+        if (moveQueue.length > 8) {
+          _removeIndex = moveQueue.removeAt(0); // Remove the first move
+          // Start the fade out animation
+          _animationController.forward().then((_) {
+            setState(() {
+              gameBoard[_removeIndex ~/ 4][_removeIndex % 4] =
+                  ''; // Clear the cell of the first move after animation
+              _animationController.reset();
+            });
+          });
+        }
         if (checkForWinner()) {
-          // Update wins if there's a winner
           if (isPlayer1Turn) {
             player1Wins++;
           } else {
@@ -58,17 +93,42 @@ class _GamePageState extends State<GamePage> {
   }
 
   bool checkForWinner() {
-    // Winning combinations
     List<List<int>> winningCombos = [
-      [0, 1, 2], [3, 4, 5], [6, 7, 8], // Rows
-      [0, 3, 6], [1, 4, 7], [2, 5, 8], // Columns
-      [0, 4, 8], [2, 4, 6] // Diagonals
+      // Rows
+      [0, 1, 2, 3, 4],
+      [5, 6, 7, 8, 9],
+      [10, 11, 12, 13, 14],
+      [15, 16, 17, 18, 19],
+      [20, 21, 22, 23, 24],
+      // Columns
+      [0, 5, 10, 15, 20],
+      [1, 6, 11, 16, 21],
+      [2, 7, 12, 17, 22],
+      [3, 8, 13, 18, 23],
+      [4, 9, 14, 19, 24],
+      // Diagonals
+      [0, 6, 12, 18, 24],
+      [4, 8, 12, 16, 20]
     ];
 
     for (var combo in winningCombos) {
-      if (gameBoard[combo[0]] != '' &&
-          gameBoard[combo[0]] == gameBoard[combo[1]] &&
-          gameBoard[combo[1]] == gameBoard[combo[2]]) {
+      // Convert flat index to 2D index
+      int row1 = combo[0] ~/ 5;
+      int col1 = combo[0] % 5;
+      int row2 = combo[1] ~/ 5;
+      int col2 = combo[1] % 5;
+      int row3 = combo[2] ~/ 5;
+      int col3 = combo[2] % 5;
+      int row4 = combo[3] ~/ 5;
+      int col4 = combo[3] % 5;
+      int row5 = combo[4] ~/ 5;
+      int col5 = combo[4] % 5;
+
+      if (gameBoard[row1][col1] != '' &&
+          gameBoard[row1][col1] == gameBoard[row2][col2] &&
+          gameBoard[row2][col2] == gameBoard[row3][col3] &&
+          gameBoard[row3][col3] == gameBoard[row4][col4] &&
+          gameBoard[row4][col4] == gameBoard[row5][col5]) {
         showDialog(
           context: context,
           builder: (BuildContext context) {
@@ -91,16 +151,14 @@ class _GamePageState extends State<GamePage> {
       }
     }
 
-    // Check for draw
-    if (!gameBoard.contains('')) {
+    if (!gameBoard.any((row) => row.any((cell) => cell == ''))) {
       showDialog(
-        barrierDismissible:
-            false, // Set to false to prevent dismissal by tapping outside
+        barrierDismissible: false,
         context: context,
         builder: (BuildContext context) {
           return AlertDialog(
             title: const Text('Game Over'),
-            content: Text('$currentPlayer wins!'),
+            content: const Text('It\'s a draw!'),
             actions: [
               TextButton(
                 onPressed: () {
@@ -127,13 +185,11 @@ class _GamePageState extends State<GamePage> {
       ),
       body: Column(
         children: [
-          // Player names
           Padding(
             padding: const EdgeInsets.all(10.0),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                // Player 1 name with color container
                 Container(
                   color: widget.player1Color,
                   padding: const EdgeInsets.all(8.0),
@@ -142,7 +198,6 @@ class _GamePageState extends State<GamePage> {
                     style: const TextStyle(color: Colors.white),
                   ),
                 ),
-                // Player 2 name with color container
                 Container(
                   color: widget.player2Color,
                   padding: const EdgeInsets.all(8.0),
@@ -154,18 +209,20 @@ class _GamePageState extends State<GamePage> {
               ],
             ),
           ),
-          // Wins count
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 10.0),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                Text('${widget.player1Name.toUpperCase()} Wins: $player1Wins'),
-                Text('${widget.player2Name.toUpperCase()} Wins: $player2Wins'),
+                Text(
+                  '${widget.player1Name.toUpperCase()} Wins: $player1Wins',
+                ),
+                Text(
+                  '${widget.player2Name.toUpperCase()} Wins: $player2Wins',
+                ),
               ],
             ),
           ),
-          // Turn indicator
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 10.0),
             child: Text(
@@ -175,16 +232,17 @@ class _GamePageState extends State<GamePage> {
               style: const TextStyle(fontSize: 18.0),
             ),
           ),
-          // Game board
           Expanded(
             child: GridView.builder(
-              itemCount: 9,
+              itemCount: 25,
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 3,
+                crossAxisCount: 5,
               ),
               itemBuilder: (context, index) {
+                int row = index ~/ 5;
+                int col = index % 5;
                 Color cellColor;
-                String cellText = gameBoard[index];
+                String cellText = gameBoard[row][col];
                 if (cellText == 'X') {
                   cellColor = widget.player1Color;
                 } else if (cellText == 'O') {
@@ -192,21 +250,33 @@ class _GamePageState extends State<GamePage> {
                 } else {
                   cellColor = Colors.transparent;
                 }
-                return InkWell(
-                  onTap: () {
-                    makeMove(index);
-                  },
-                  child: Container(
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.black),
-                      color: cellColor,
-                    ),
-                    child: Center(
-                      child: Text(
-                        cellText,
-                        style: TextStyle(
-                          fontSize: 40.0,
-                          color: cellText == 'X' ? Colors.white : Colors.black,
+                return AnimatedBuilder(
+                  animation: _animationController,
+                  builder: (context, child) => AnimatedOpacity(
+                    opacity: _removeIndex == index &&
+                            _animationController.isAnimating
+                        ? _opacityAnimation.value
+                        : 1,
+                    duration: _animationController.duration!,
+                    child: child,
+                  ),
+                  child: InkWell(
+                    onTap: () {
+                      makeMove(row, col);
+                    },
+                    child: Container(
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.black),
+                        color: cellColor,
+                      ),
+                      child: Center(
+                        child: Text(
+                          cellText,
+                          style: TextStyle(
+                            fontSize: 40.0,
+                            color:
+                                cellText == 'X' ? Colors.white : Colors.black,
+                          ),
                         ),
                       ),
                     ),
@@ -215,7 +285,6 @@ class _GamePageState extends State<GamePage> {
               },
             ),
           ),
-          // Reset button
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
@@ -230,11 +299,10 @@ class _GamePageState extends State<GamePage> {
                     player2Wins = 0;
                   });
                 },
-                child: const Text('new game'),
+                child: const Text('Reset Scores'),
               ),
             ],
           ),
-          // Reset button for wins count
         ],
       ),
     );
