@@ -123,7 +123,7 @@ class _NewMediumModePageState extends State<NewMediumModePage> {
                 content: SingleChildScrollView(
                   child: ColorPicker(
                     pickerColor: currentColor,
-                    onColorChanged: (color) => Navigator.of(context).pop(color),
+                    onColorChanged: onColorChanged,
                     colorPickerWidth: 300.0,
                     pickerAreaHeightPercent: 0.7,
                     enableAlpha: true,
@@ -132,20 +132,6 @@ class _NewMediumModePageState extends State<NewMediumModePage> {
                     paletteType: PaletteType.hsv,
                   ),
                 ),
-                actions: <Widget>[
-                  TextButton(
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                    },
-                    child: const Text('Cancel'),
-                  ),
-                  TextButton(
-                    onPressed: () {
-                      Navigator.of(context).pop(currentColor);
-                    },
-                    child: const Text('OK'),
-                  ),
-                ],
               );
             },
           );

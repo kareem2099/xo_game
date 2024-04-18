@@ -132,14 +132,6 @@ class _ClassicMediumModePageState extends State<ClassicMediumModePage> {
                     paletteType: PaletteType.hsv,
                   ),
                 ),
-                actions: <Widget>[
-                  TextButton(
-                    onPressed: () {
-                      Navigator.of(context).pop(currentColor);
-                    },
-                    child: const Text('OK'),
-                  ),
-                ],
               );
             },
           );
